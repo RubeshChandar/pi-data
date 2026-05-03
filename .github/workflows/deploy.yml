@@ -27,8 +27,8 @@ jobs:
           password: ${{ secrets.PI_PASSWORD }}
           script: |
             echo "Deploying to Raspberry Pi..."
-            cd /home/rubesh/web/data
+            cd /home/rubesh/web/data || exit 1
             git fetch origin main
             git reset --hard origin/main
-            docker-compose down
-            docker-compose up -d --build
+            docker compose down
+            docker compose up -d --build
