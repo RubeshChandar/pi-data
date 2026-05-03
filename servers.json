@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Data-Pi Postgres",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "defaultdb",
+      "Username": "admin",
+      "SSLMode": "prefer"
+    }
+  }
+}
