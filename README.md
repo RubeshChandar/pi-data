@@ -22,7 +22,26 @@ Future applications will share this exact infrastructure using the same logical 
 
 1. Ensure your external SSD is mounted and Docker is configured to use it for volume storage.
 2. Connect the Raspberry Pi to your Tailscale network.
-3. Run `docker compose up -d` to start the stack.
+3. Copy `.env.example` to `.env` and fill in your credentials:
+   ```bash
+   cp .env.example .env
+   ```
+4. SCP the `.env` to the Pi (it is never committed to git):
+   ```bash
+   scp .env rubesh@192.168.68.71:/home/rubesh/web/data/.env
+   ```
+5. Run `docker compose up -d` to start the stack.
+
+---
+
+## Secrets Management
+
+Credentials are **not stored in this repository**. They live in a `.env` file that is:
+- Listed in `.gitignore` — never committed
+- Managed locally and pushed to the Pi manually via `scp`
+- Templated in `.env.example` which shows the required variable names with no values
+
+To rotate a credential: update your local `.env` → `scp` it to the Pi → `docker compose up -d` to restart affected containers.
 
 ---
 
@@ -40,23 +59,23 @@ Future applications will share this exact infrastructure using the same logical 
 | | Value |
 |---|---|
 | Port | `5432` |
-| User | `admin` |
-| Password | `password` |
-| Default DB | `defaultdb` |
+| User | `POSTGRES_USER` (see `.env`) |
+| Password | `POSTGRES_PASSWORD` (see `.env`) |
+| Default DB | `POSTGRES_DB` (see `.env`) |
 
 **From outside the Pi (your Mac / another machine / your apps):**
 ```bash
-psql -h 192.168.68.71 -p 5432 -U admin -d defaultdb
+psql -h 192.168.68.71 -p 5432 -U <POSTGRES_USER> -d <POSTGRES_DB>
 ```
 
 **From the Pi host itself (not inside a container):**
 ```bash
-psql -h localhost -p 5432 -U admin -d defaultdb
+psql -h localhost -p 5432 -U <POSTGRES_USER> -d <POSTGRES_DB>
 ```
 
 **pgAdmin UI:** http://192.168.68.71:5050
-- Email: `admin@admin.com`
-- Password: `password`
+- Email: `PGADMIN_DEFAULT_EMAIL` (see `.env`)
+- Password: `PGADMIN_DEFAULT_PASSWORD` (see `.env`)
 
 ---
 
@@ -96,27 +115,27 @@ redis-cli -h 192.168.68.71 -p 6379
 | | Value |
 |---|---|
 | Port | `27017` |
-| Root User | `admin` |
-| Root Password | `password` |
+| Root User | `MONGO_INITDB_ROOT_USERNAME` (see `.env`) |
+| Root Password | `MONGO_INITDB_ROOT_PASSWORD` (see `.env`) |
 
 **From outside the Pi (your Mac / your apps):**
 ```bash
-mongosh --host 192.168.68.71 --port 27017 -u admin -p password
+mongosh --host 192.168.68.71 --port 27017 -u <MONGO_USER> -p <MONGO_PASSWORD>
 ```
 
 **Without mongosh installed (using Docker):**
 ```bash
-docker run --rm mongo:7 mongosh --host 192.168.68.71 -u admin -p password --eval "db.adminCommand('ping')"
+docker run --rm mongo:7 mongosh --host 192.168.68.71 -u <MONGO_USER> -p <MONGO_PASSWORD> --eval "db.adminCommand('ping')"
 ```
 
 **From the Pi host itself (not inside a container):**
 ```bash
-mongosh --host localhost --port 27017 -u admin -p password
+mongosh --host localhost --port 27017 -u <MONGO_USER> -p <MONGO_PASSWORD>
 ```
 
 **Connection string format:**
 ```
-mongodb://admin:password@192.168.68.71:27017/
+mongodb://<MONGO_USER>:<MONGO_PASSWORD>@192.168.68.71:27017/
 ```
 
 ---
@@ -127,13 +146,13 @@ Run from the Pi or your Mac (replace IP with `localhost` if on the Pi):
 
 ```bash
 # Postgres
-pg_isready -h 192.168.68.71 -p 5432 -U admin
+pg_isready -h 192.168.68.71 -p 5432 -U <POSTGRES_USER>
 
 # Redis
 redis-cli -h 192.168.68.71 -p 6379 ping
 
 # MongoDB
-docker run --rm mongo:7 mongosh --host 192.168.68.71 -u admin -p password --eval "db.adminCommand('ping')" --quiet
+docker run --rm mongo:7 mongosh --host 192.168.68.71 -u <MONGO_USER> -p <MONGO_PASSWORD> --eval "db.adminCommand('ping')" --quiet
 ```
 
 Or check Docker health status directly on the Pi:
